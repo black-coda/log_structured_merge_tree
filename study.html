@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study: ASD-STE100 + Bourbon Codebase Guide</title>
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --ink: #1a1a18;
+    --muted: #5c5a54;
+    --rule: #d9d4c8;
+    --accent: #8b3a2a;
+    --accent-soft: #f3e4df;
+    --ste: #1e5631;
+    --ste-soft: #e4efe7;
+    --bad: #8b3a2a;
+    --bad-soft: #f8e8e4;
+    --card: #ffffff;
+    --code-bg: #efece4;
+    --max: 52rem;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.65 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 3rem 1.25rem 6rem; }
+
+  header.hero {
+    border-bottom: 1px solid var(--rule);
+    padding: 3.5rem 0 2.25rem;
+    margin-bottom: 2.5rem;
+  }
+  .eyebrow {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 1rem;
+  }
+  h1 {
+    font-size: clamp(1.9rem, 4.5vw, 2.7rem);
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 1rem;
+  }
+  .lede {
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 40rem;
+    margin: 0;
+  }
+
+  nav.toc {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 3rem;
+    font-size: 0.92rem;
+  }
+  nav.toc strong {
+    display: block;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.55rem;
+    font-weight: 600;
+  }
+  nav.toc ol { margin: 0; padding-left: 1.2rem; }
+  nav.toc li { margin: 0.25rem 0; }
+  nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+  h2 {
+    font-size: 1.45rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin: 3.25rem 0 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+  h2 .num {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.8em;
+    color: var(--accent);
+    margin-right: 0.5rem;
+    font-weight: 500;
+  }
+  h3 {
+    font-size: 1.08rem;
+    font-weight: 600;
+    margin: 2rem 0 0.6rem;
+  }
+  p { margin: 0.75rem 0; }
+  a { color: var(--accent); }
+
+  .callout {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    font-size: 0.97rem;
+  }
+  .callout.ste { border-left-color: var(--ste); }
+  .callout .label {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+  .callout.ste .label { color: var(--ste); }
+
+  .two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.25rem 0;
+  }
+  @media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
+  .pair {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.95rem;
+  }
+  .pair .tag {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+    display: block;
+  }
+  .pair.bad .tag { color: var(--bad); }
+  .pair.good .tag { color: var(--ste); }
+  .pair.bad { background: var(--bad-soft); border-color: #e8d0c8; }
+  .pair.good { background: var(--ste-soft); border-color: #c5d9cb; }
+  .pair p { margin: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin: 1.25rem 0;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    background: var(--code-bg);
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  tr:last-child td { border-bottom: none; }
+  td code, p code, li code {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.85em;
+    background: var(--code-bg);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+  }
+
+  ol.rules, ul.plain { padding-left: 1.35rem; }
+  ol.rules li, ul.plain li { margin: 0.4rem 0; }
+
+  .prompt-box {
+    background: #1c1b18;
+    color: #e8e4da;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    padding: 1.15rem 1.3rem;
+    border-radius: 6px;
+    margin: 1.25rem 0;
+    overflow-x: auto;
+    white-space: pre-wrap;
+  }
+  .prompt-box .c { color: #8a8578; }
+  .prompt-box .k { color: #d4a574; }
+
+  .meter {
+    display: flex;
+    gap: 0.3rem;
+    margin: 0.75rem 0 0.25rem;
+  }
+  .meter span {
+    flex: 1;
+    height: 7px;
+    background: var(--rule);
+    border-radius: 2px;
+  }
+  .meter span.on { background: var(--ste); }
+  .meter-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  }
+
+  .pill {
+    display: inline-block;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.2em 0.55em;
+    border-radius: 99px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 0.35rem;
+  }
+  .pill.green { background: var(--ste-soft); color: var(--ste); }
+
+  .wordcount {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.35rem;
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); }
+
+  .section-intro { color: var(--muted); font-size: 1.02rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Writing study · Controlled language · Code guide</p>
+  <h1>ASD-STE100, and the Bourbon codebase explained in it</h1>
+  <p class="lede">
+    Part one: what Simplified Technical English requires, how to prompt
+    an LLM with it, and how to soften the rules to about 80%.
+    Part two: the Bourbon LSM system explained in STE, with a guide to
+    navigate the Go code.
+  </p>
+</header>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#what">What ASD-STE100 is</a></li>
+    <li><a href="#core">The core constraints</a></li>
+    <li><a href="#rules">The 53 rules in brief</a></li>
+    <li><a href="#why">Why it works with LLMs</a></li>
+    <li><a href="#prompt">How to ask for it</a></li>
+    <li><a href="#soft">The 80% softening</a></li>
+    <li><a href="#check">A quick self-check</a></li>
+    <li><a href="#limits">Limits and caveats of STE</a></li>
+    <li><a href="#bourbon">Bourbon: what was built</a></li>
+    <li><a href="#paths">Write path and read paths</a></li>
+    <li><a href="#model">The model and learning modes</a></li>
+    <li><a href="#navigate">How to navigate the code</a></li>
+    <li><a href="#results">Measured results</a></li>
+    <li><a href="#checklist">Change checklist</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<h2 id="what"><span class="num">01</span>What ASD-STE100 is</h2>
+
+<p>
+  ASD-STE100 is a controlled natural language. The aerospace and defence
+  industry wrote it for maintenance manuals. Readers across many countries
+  must understand those manuals the same way. The standard became
+  international in 2025.
+</p>
+<p>
+  The standard has two parts that work together.
+</p>
+
+<table>
+  <tr><th>Part</th><th>Name</th><th>What it does</th></tr>
+  <tr>
+    <td>Part 1</td>
+    <td>Writing rules</td>
+    <td>53 rules in 9 sections. The rules cover words, verbs, sentences,
+        procedures, descriptions, warnings, punctuation, and practice.</td>
+  </tr>
+  <tr>
+    <td>Part 2</td>
+    <td>Dictionary</td>
+    <td>About 900 approved words. Each word has one meaning and one part of
+        speech. About 1200 non-approved words have approved alternatives.</td>
+  </tr>
+</table>
+
+<p>
+  The goal is one word, one meaning, one part of speech. When English has
+  many synonyms, STE picks one. It uses <code>start</code> instead of
+  <code>begin</code>, <code>commence</code>, or <code>initiate</code>.
+  When a word has many meanings, STE picks one. <code>Fall</code> means
+  to move down by gravity. It does not mean decrease.
+</p>
+
+<div class="callout ste">
+  <span class="label">Key idea</span>
+  <p style="margin:0">
+    STE is not a style guide. It is a specification. Its rules are testable.
+    Plain English and STE overlap, but they are not the same. Clear text can
+    still break STE rules.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="core"><span class="num">02</span>The core constraints</h2>
+
+<p class="section-intro">
+  These are the limits that change writing the most. Learn these first.
+</p>
+
+<table>
+  <tr><th>Constraint</th><th>Rule</th><th>Detail</th></tr>
+  <tr>
+    <td><span class="pill">Length</span></td>
+    <td>Sentence limits</td>
+    <td>Procedural: max 20 words. Descriptive: max 25 words.
+        Warnings and cautions: max 20 words.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Length</span></td>
+    <td>Paragraph limit</td>
+    <td>Max 6 sentences. One topic per paragraph. Start with the topic
+        sentence.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Voice</span></td>
+    <td>Active voice</td>
+    <td>Always active in procedures. In descriptions, use active as much as
+        you can. Passive only when the agent is unknown or unimportant.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Verbs</span></td>
+    <td>Six forms only</td>
+    <td>Infinitive, imperative, simple present, simple past, future, past
+        participle as adjective. No progressive, no present perfect, no
+        past perfect.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Verbs</span></td>
+    <td>Modals</td>
+    <td>Only <code>can</code> and <code>must</code> are approved. Do not use
+        may, might, could, should, would, shall.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Words</span></td>
+    <td>Controlled vocabulary</td>
+    <td>Use approved words, technical names, and technical verbs. Each
+        approved word keeps its one meaning and one part of speech.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Words</span></td>
+    <td>Noun clusters</td>
+    <td>Max 3 words in a multi-word noun. Longer terms become phrases with
+        of, on, in, for.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Structure</span></td>
+    <td>One topic per sentence</td>
+    <td>One instruction per sentence in procedures. Do not omit words to
+        make sentences short.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Punctuation</span></td>
+    <td>No semicolons</td>
+    <td>Semicolons are banned. All other standard marks are allowed.</td>
+  </tr>
+  <tr>
+    <td><span class="pill">Counting</span></td>
+    <td>Word count rules</td>
+    <td>A number with its unit counts as 1 word. An abbreviation counts as
+        1. A hyphenated group counts as 1. Parenthetical text counts as its
+        own sentence.</td>
+  </tr>
+</table>
+
+<h3>Procedural vs descriptive</h3>
+<p>
+  STE splits text into two types. Each type has its own rules.
+</p>
+<div class="two">
+  <div class="pair good">
+    <span class="tag">Procedural</span>
+    <p>
+      Instructions. Use the imperative. Max 20 words. One instruction per
+      sentence. Always active voice.
+      <span class="wordcount">Example: "Tighten the bolt to 25 N·m."</span>
+    </p>
+  </div>
+  <div class="pair good">
+    <span class="tag">Descriptive</span>
+    <p>
+      Information about an item or system. Declarative. Max 25 words.
+      Active as much as possible. Paragraphs show logic.
+      <span class="wordcount">Example: "The valve controls the flow of fuel
+      to the engine."</span>
+    </p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="rules"><span class="num">03</span>The 53 rules in brief</h2>
+
+<p class="section-intro">
+  Nine sections. Full text lives in the official specification (Issue 9,
+  January 2025). This is a working summary.
+</p>
+
+<table>
+  <tr><th>§</th><th>Topic</th><th>Rules</th><th>In one line</th></tr>
+  <tr><td>1</td><td>Words</td><td>1.1–1.14</td>
+      <td>Approved words only, correct part of speech and meaning. Technical
+          names and verbs follow categories. American spelling.</td></tr>
+  <tr><td>2</td><td>Multi-word nouns</td><td>2.1–2.3</td>
+      <td>Max 3 words. Longer terms get hyphens or a full explanation.
+          Use articles before nouns.</td></tr>
+  <tr><td>3</td><td>Verbs</td><td>3.1–3.7</td>
+      <td>Six approved forms. No unapproved tenses. Active voice. Prefer a
+          verb over a noun for an action.</td></tr>
+  <tr><td>4</td><td>Sentences</td><td>4.1–4.4</td>
+      <td>One topic per sentence. Never omit words. Use tables for complex
+          text. Join related sentences with connecting words.</td></tr>
+  <tr><td>5</td><td>Procedures</td><td>5.1–5.5</td>
+      <td>Max 20 words. One instruction per sentence. Imperative verb.
+          Conditions come first with a comma.</td></tr>
+  <tr><td>6</td><td>Descriptive writing</td><td>6.1–6.8</td>
+      <td>Max 25 words. Max 6 sentences per paragraph. Topic sentence
+          first. Vary constructions. Present complex ideas slowly.</td></tr>
+  <tr><td>7</td><td>Warnings and notes</td><td>7.1–7.6</td>
+      <td>Start with a clear command. Be specific. Conditions come first.
+          Notes give information, not commands.</td></tr>
+  <tr><td>8</td><td>Punctuation and counts</td><td>8.1–8.11</td>
+      <td>Colons and dashes for tables. Hyphens join. Parentheses for
+          references. Numbers and abbreviations count as one word. No
+          semicolons.</td></tr>
+  <tr><td>9</td><td>Writing practices</td><td>9.1–9.3</td>
+      <td>Rewrite with a new construction when word-for-word is not enough.
+          Keep dictionary meanings inside phrases. Use the dictionary
+          correctly.</td></tr>
+</table>
+
+<div class="callout">
+  <span class="label">Rule people forget</span>
+  <p style="margin:0">
+    Rule 4.2: Do not omit words to make sentences shorter. Shortcuts like
+    "Can be a maximum five inches long" are non-STE. Write "Cracks can have
+    a maximum length of five inches." Completeness beats brevity.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="why"><span class="num">04</span>Why it works with LLMs</h2>
+
+<p>
+  LLMs default to fluent, hedge-heavy, synonym-rich prose. That style is
+  hard to translate, hard to test, and easy to misread. STE pushes the
+  model into a narrow channel. The channel is good for readers and good
+  for downstream tools.
+</p>
+
+<h3>What STE forces the model to do</h3>
+<ul class="plain">
+  <li><strong>Cut hedging.</strong> Only <code>can</code> and
+      <code>must</code> survive. "Might," "could," and "should" disappear.</li>
+  <li><strong>Name the actor.</strong> Active voice makes the subject
+      explicit. No hidden agents.</li>
+  <li><strong>One claim per sentence.</strong> The model cannot pile three
+      ideas into one line.</li>
+  <li><strong>Pick one word per concept.</strong> Synonym drift across a
+      long answer stops.</li>
+  <li><strong>Hit a hard length cap.</strong> The model must split or cut.
+      It cannot ramble past 20 or 25 words.</li>
+</ul>
+
+<h3>What STE gives you downstream</h3>
+<ul class="plain">
+  <li>Machine translation treats each approved word the same way each
+      time.</li>
+  <li>Readers with limited English reach the same meaning.</li>
+  <li>Reviewers check compliance with a testable list, not taste.</li>
+  <li>Consistency holds across a team or a set of documents.</li>
+</ul>
+
+<div class="two">
+  <div class="pair bad">
+    <span class="tag">Typical LLM default</span>
+    <p>
+      "It's worth noting that the system might occasionally fail to
+      initialize properly, which could potentially lead to degraded
+      performance under certain circumstances."
+    </p>
+    <div class="wordcount">30 words · passive hedge · vague · synonyms</div>
+  </div>
+  <div class="pair good">
+    <span class="tag">Same content in STE style</span>
+    <p>
+      "The system can fail at start. When it fails, the system works at a
+      lower speed. Do the start test before you use the system."
+    </p>
+    <div class="wordcount">27 words · active · concrete · one topic each</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="prompt"><span class="num">05</span>How to ask for it</h2>
+
+<p>
+  Do not just say "write in simple English." Name the standard. Give the
+  hard limits. Ask the model to classify its own text as procedural or
+  descriptive before it writes.
+</p>
+
+<div class="prompt-box"><span class="c"># Full-compliance prompt</span>
+<span class="k">Write the following explanation in ASD-STE100 Simplified Technical English.
+
+Rules you must obey:
+- Classify the text first as procedural or descriptive. Do not mix them in one passage.
+- Procedural sentences: maximum 20 words. Descriptive sentences: maximum 25 words.
+- Maximum 6 sentences per paragraph. One topic per paragraph. Topic sentence first.
+- Use active voice. In procedures, always active. In descriptions, active unless the agent is unknown.
+- Use only these verb forms: infinitive, imperative, simple present, simple past, future, past participle as adjective.
+- Use only the modals "can" and "must". Do not use may, might, could, should, would, shall.
+- One instruction per sentence in procedures. One topic per sentence in descriptions.
+- Multi-word nouns: maximum 3 words. Longer terms: rewrite with of, on, in, for.
+- No semicolons. Do not omit words to make sentences short.
+- Prefer one approved word per meaning. Do not use synonyms for variety.
+- Keep every fact from the source. Do not add agents, numbers, causes, or obligations.
+
+After the text, list any word you could not verify against the approved dictionary and say why you kept it.
+</span>
+<span class="c">Source:
+{paste source text here}</span></div>
+
+<h3>Why this prompt shape works</h3>
+<ol class="rules">
+  <li><strong>Name the standard.</strong> "ASD-STE100" loads the right
+      constraint set. "Simple English" does not.</li>
+  <li><strong>State the hard numbers.</strong> 20, 25, 6, 3. Models follow
+      explicit caps better than vague goals.</li>
+  <li><strong>Force a classification first.</strong> Procedural and
+      descriptive rules differ. Mixing them breaks compliance.</li>
+  <li><strong>Require a word audit.</strong> The model flags terms it
+      could not verify. You then check those terms yourself.</li>
+  <li><strong>Protect meaning.</strong> The "keep every fact" line blocks
+      silent deletions made only to hit a word count.</li>
+</ol>
+
+<div class="callout">
+  <span class="label">Two-pass variant</span>
+  <p style="margin:0">
+    First pass: "List every proposition in this source as one line each."
+    Second pass: "Rewrite these propositions in ASD-STE100. Keep every
+    line. Split sentences, never delete content." This order makes meaning
+    loss visible.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="soft"><span class="num">06</span>The 80% softening</h2>
+
+<p>
+  Full STE is stringent. For blog posts, READMEs, and study notes, strict
+  compliance can sound stiff. A common working compromise is about 80% of
+  the way to ASD-STE100. Keep the structural rules. Bend the vocabulary
+  rules a little.
+</p>
+
+<div class="meter" aria-hidden="true">
+  <span class="on"></span><span class="on"></span><span class="on"></span>
+  <span class="on"></span><span class="on"></span><span class="on"></span>
+  <span class="on"></span><span class="on"></span><span></span><span></span>
+</div>
+<div class="meter-label">8 / 10 — structural rules kept, vocabulary relaxed</div>
+
+<h3>Keep these (the high-value rules)</h3>
+<table>
+  <tr><th>Rule</th><th>Why keep it</th></tr>
+  <tr><td>Sentence length caps (20 / 25)</td>
+      <td>Biggest readability win. Easy to check.</td></tr>
+  <tr><td>Max 6 sentences per paragraph</td>
+      <td>Forces structure without sounding odd.</td></tr>
+  <tr><td>Active voice</td>
+      <td>Removes hidden agents and ambiguity.</td></tr>
+  <tr><td>One topic per sentence</td>
+      <td>Stops dense, compound claims.</td></tr>
+  <tr><td>No semicolons</td>
+      <td>Cheap rule, real clarity gain.</td></tr>
+  <tr><td>Modals: can / must only</td>
+      <td>Cuts hedge fog. Works well in technical prose.</td></tr>
+  <tr><td>No omitted subjects or objects</td>
+      <td>Blocks telegraphic fragments.</td></tr>
+  <tr><td>Meaning fidelity</td>
+      <td>Never sacrifice a fact to hit a word count.</td></tr>
+</table>
+
+<h3>Relax these (the low-value or high-cost rules)</h3>
+<table>
+  <tr><th>Rule</th><th>How to relax it</th></tr>
+  <tr><td>Approved dictionary only</td>
+      <td>Allow normal common words. Ban only true jargon and unexplained
+          synonyms. Aim for one word per concept, not one word from a
+          fixed list.</td></tr>
+  <tr><td>Six verb forms only</td>
+      <td>Allow present perfect when it is the natural form
+          ("The system has three states"). Still ban progressive
+          ("is checking") and past perfect.</td></tr>
+  <tr><td>American spelling only</td>
+      <td>Pick one variety and stay consistent. Do not mix.</td></tr>
+  <tr><td>Technical names/verbs categories</td>
+      <td>Allow normal field terms without formal category
+          paperwork.</td></tr>
+  <tr><td>Word-count edge cases</td>
+      <td>Do not argue about hyphens and parentheses. Count by eye with a
+          20/25 target, plus or minus a word.</td></tr>
+</table>
+
+<h3>A soft prompt (about 80%)</h3>
+<div class="prompt-box"><span class="c"># Softened prompt</span>
+Write the explanation in a style that is about 80% of the way to
+ASD-STE100 Simplified Technical English.
+
+Keep these rules exactly:
+- Maximum 20 words per procedural sentence. Maximum 25 words per descriptive sentence.
+- Maximum 6 sentences per paragraph. One topic per paragraph. Topic sentence first.
+- Active voice as the default.
+- One topic per sentence. One instruction per sentence in steps.
+- No semicolons. Do not drop subjects or objects.
+- Use only "can" and "must" for possibility and obligation.
+- Keep every fact from the source. Split long sentences. Never delete content to save words.
+
+Soften these rules:
+- You may use normal common words, not only the approved STE dictionary.
+- You may use the present perfect when it reads naturally.
+- Keep one consistent word for each concept. Do not switch synonyms.
+
+Classify the text as procedural or descriptive first, then write it.</div>
+
+<div class="callout ste">
+  <span class="label">Rule of thumb</span>
+  <p style="margin:0">
+    If a rule changes structure, keep it. If a rule only changes the word
+    list, you may relax it. Structure is what readers feel. Vocabulary
+    purity is what auditors check.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="check"><span class="num">07</span>A quick self-check</h2>
+
+<p>
+  Run this pass on any answer you plan to keep. Each line is one test.
+</p>
+
+<table>
+  <tr><th>#</th><th>Check</th><th>Pass looks like</th></tr>
+  <tr><td>1</td><td>Text type</td>
+      <td>Procedural or descriptive. Not mixed in one passage.</td></tr>
+  <tr><td>2</td><td>Sentence length</td>
+      <td>No procedural sentence over 20 words. No descriptive sentence
+          over 25.</td></tr>
+  <tr><td>3</td><td>Paragraph</td>
+      <td>No paragraph over 6 sentences. Topic sentence first.</td></tr>
+  <tr><td>4</td><td>Voice</td>
+      <td>Active by default. Passive only when the agent is unknown.</td></tr>
+  <tr><td>5</td><td>Verbs</td>
+      <td>No progressive. No past perfect. Modals only can / must.</td></tr>
+  <tr><td>6</td><td>Nouns</td>
+      <td>No noun cluster over 3 words. One name per thing, used
+          everywhere.</td></tr>
+  <tr><td>7</td><td>Punctuation</td>
+      <td>No semicolons. No omitted words for brevity.</td></tr>
+  <tr><td>8</td><td>Meaning</td>
+      <td>Every fact from the source is present. Nothing new was
+          invented.</td></tr>
+  <tr><td>9</td><td>Hedges</td>
+      <td>No "might," "could," "should," "would" unless you deliberately
+          relaxed this.</td></tr>
+  <tr><td>10</td><td>Consistency</td>
+      <td>Same word for the same concept in the whole answer.</td></tr>
+</table>
+
+<h3>Common failures and fixes</h3>
+<div class="two">
+  <div class="pair bad">
+    <span class="tag">Failure</span>
+    <p>"The panel has been removed by the technician."</p>
+    <div class="wordcount">Present perfect + passive + agent</div>
+  </div>
+  <div class="pair good">
+    <span class="tag">STE fix</span>
+    <p>"The technician removes the panel."</p>
+    <div class="wordcount">Simple present + active</div>
+  </div>
+</div>
+<div class="two">
+  <div class="pair bad">
+    <span class="tag">Failure</span>
+    <p>"Make sure the valve is operable before you start the test."</p>
+    <div class="wordcount">"Operable" is not approved. Sentence is 14 words
+        but the word fails.</div>
+  </div>
+  <div class="pair good">
+    <span class="tag">STE fix</span>
+    <p>"Make sure the valve can operate before you start the test."</p>
+    <div class="wordcount">Approved verb construction</div>
+  </div>
+</div>
+<div class="two">
+  <div class="pair bad">
+    <span class="tag">Failure</span>
+    <p>"This is a complex multi-word noun phrase example that shows the
+        problem."</p>
+    <div class="wordcount">Noun cluster way over 3 words</div>
+  </div>
+  <div class="pair good">
+    <span class="tag">STE fix</span>
+    <p>"This example shows the problem with long noun phrases."</p>
+    <div class="wordcount">Short noun phrases with prepositions</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="limits"><span class="num">08</span>Limits and caveats of STE</h2>
+
+<ul class="plain">
+  <li><strong>Not a full grammar guide.</strong> STE sits next to your
+      house style and publication specs. It does not replace them.</li>
+  <li><strong>Does not cover formatting.</strong> Type, numbering, units,
+      and layout come from other specs.</li>
+  <li><strong>Dictionary access matters.</strong> Full compliance needs
+      the official Part 2 dictionary. Without it, aim for the 80% level
+      and say so.</li>
+  <li><strong>Models over-claim compliance.</strong> An LLM can say "this
+      is STE" and still break rules. Run the self-check yourself.</li>
+  <li><strong>Meaning loss is the real risk.</strong> A rewrite can pass
+      every word rule and still drop a fact. Check fidelity first, then
+      words.</li>
+  <li><strong>Soft mode is a choice, not a cheat.</strong> Use full STE
+      for regulated or translated docs. Use 80% for notes, blogs, and
+      internal docs where stiffness costs more than purity gains.</li>
+</ul>
+
+<div class="callout">
+  <span class="label">Practical default</span>
+  <p style="margin:0">
+    Ask for full ASD-STE100 when the output must be checked, translated,
+    or read by non-native speakers under stress. Ask for the 80% soft
+    version when the output is a study note, a README section, or an
+    explanation you will edit by hand. In both modes, run the 10-point
+    self-check before you keep the text.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 2: Bourbon explanation in STE -->
+<!-- ============================================================ -->
+
+<h2 id="bourbon"><span class="num">09</span>Bourbon: what was built</h2>
+
+<p class="section-intro">
+  This part is a worked example. It explains a Go codebase in STE style.
+  It also tells you how to read the code.
+</p>
+
+<p>
+  This project is a Go implementation of the Bourbon paper
+  (arXiv:2005.14213). The paper adds learned indexes to a
+  Log-Structured Merge Tree (LSM tree). The system keeps the WiscKey
+  design for values. It adds Greedy-PLR models for key positions. It
+  also adds a cost-benefit analyzer. The analyzer decides when to train
+  a model.
+</p>
+
+<p>The system does three jobs:</p>
+<ol class="rules">
+  <li>Store key-value pairs at high write speed.</li>
+  <li>Read values with two paths: a baseline path and a model path.</li>
+  <li>Learn a model per SSTable file when the model pays for its cost.</li>
+</ol>
+
+<h3>Words you will see</h3>
+<table>
+  <tr><th>Word</th><th>Meaning in this codebase</th></tr>
+  <tr><td>LSM tree</td><td>A tree of sorted string tables (SSTables) in levels.</td></tr>
+  <tr><td>SSTable</td><td>A sorted, immutable file on disk.</td></tr>
+  <tr><td>Memtable</td><td>An in-memory table that accepts new writes.</td></tr>
+  <tr><td>WAL</td><td>Write-ahead log. It records writes before they hit disk.</td></tr>
+  <tr><td>Value log</td><td>A separate log that stores large values.</td></tr>
+  <tr><td>Value pointer</td><td>An address into the value log: log ID, offset, size.</td></tr>
+  <tr><td>PLR</td><td>Piecewise linear regression. It maps a key to a position.</td></tr>
+  <tr><td>Model</td><td>A trained PLR. It predicts where a key sits in a file.</td></tr>
+  <tr><td>CBA</td><td>Cost-benefit analyzer. It decides if training is worth it.</td></tr>
+  <tr><td>Delta (δ)</td><td>The error bound of a model. Default is 8.</td></tr>
+  <tr><td>Level</td><td>A tier in the LSM tree: L0, L1, L2, and so on.</td></tr>
+  <tr><td>Compaction</td><td>The act of merge files into a lower level.</td></tr>
+  <tr><td>Tombstone</td><td>A delete marker. It hides an older value.</td></tr>
+</table>
+
+<h3>Parts of the system</h3>
+<p>The code lives in nine packages. Each package has one job.</p>
+<table>
+  <tr><th>Package</th><th>File</th><th>Job</th></tr>
+  <tr><td><code>plr</code></td><td><code>plr/plr.go</code></td>
+      <td>Train and query Greedy-PLR models.</td></tr>
+  <tr><td><code>bloom</code></td><td><code>bloom/bloom.go</code></td>
+      <td>Bloom filter for negative lookups.</td></tr>
+  <tr><td><code>sstable</code></td><td><code>sstable/sstable.go</code></td>
+      <td>Write and read SSTable files.</td></tr>
+  <tr><td><code>vlog</code></td><td><code>vlog/vlog.go</code></td>
+      <td>Append and read the value log.</td></tr>
+  <tr><td><code>memtable</code></td><td><code>memtable/memtable.go</code></td>
+      <td>Sorted map plus WAL.</td></tr>
+  <tr><td><code>lsm</code></td><td><code>lsm/lsm.go</code></td>
+      <td>The database. It ties all parts together.</td></tr>
+  <tr><td><code>learn</code></td><td><code>learn/learn.go</code></td>
+      <td>Modes and the cost-benefit analyzer.</td></tr>
+  <tr><td><code>bench</code></td><td><code>bench/*.go</code></td>
+      <td>Datasets, benchmarks, comparisons.</td></tr>
+  <tr><td><code>cmd</code></td><td><code>cmd/bourbon/main.go</code></td>
+      <td>Command-line entry point.</td></tr>
+</table>
+
+<div class="callout ste">
+  <span class="label">Read order for a new reader</span>
+  <ol class="rules" style="margin:0">
+    <li><code>plr/plr.go</code> — small and pure. No I/O.</li>
+    <li><code>bloom/bloom.go</code> — small and pure. No I/O.</li>
+    <li><code>memtable/memtable.go</code> — in-memory writes plus WAL.</li>
+    <li><code>vlog/vlog.go</code> — value storage.</li>
+    <li><code>sstable/sstable.go</code> — file format and both read paths.</li>
+    <li><code>lsm/lsm.go</code> — the glue. Start with <code>Get</code>, then <code>Put</code>.</li>
+    <li><code>learn/learn.go</code> — when and how to train.</li>
+    <li><code>bench/</code> and <code>cmd/</code> — how to run and measure.</li>
+  </ol>
+</div>
+
+<h3>File format</h3>
+<p>An SSTable file has four parts in order.</p>
+<table>
+  <tr><th>Part</th><th>Contents</th></tr>
+  <tr><td>Data block(s)</td>
+      <td>Sorted records: 8-byte key + 16-byte value pointer.</td></tr>
+  <tr><td>Index block</td>
+      <td>One entry per data block: first key, max key, offset, size,
+          record count.</td></tr>
+  <tr><td>Filter block</td>
+      <td>Bloom filter over all keys.</td></tr>
+  <tr><td>Footer</td>
+      <td>Magic number <code>0x424f5552</code>, offsets for index and
+          filter.</td></tr>
+</table>
+<p>
+  Record size is fixed at 24 bytes. Fixed size makes chunk loads exact.
+  The model can compute a byte range from a record position.
+</p>
+
+<!-- ============================================================ -->
+<h2 id="paths"><span class="num">10</span>Write path and read paths</h2>
+
+<h3>Write path</h3>
+<p>Follow a <code>Put</code> from start to end.</p>
+<ol class="rules">
+  <li>The caller runs <code>db.Put(key, value)</code>.</li>
+  <li><code>lsm.DB.write</code> appends the pair to the WAL.</li>
+  <li><code>lsm.DB.write</code> appends the pair to the memtable.</li>
+  <li>The value goes to the value log. The memtable stores a pointer.</li>
+  <li>When the memtable is full, a worker flushes it.</li>
+  <li>The flush writes a new SSTable in L0.</li>
+  <li>The flush links the file into the level list.</li>
+  <li>The old memtable stays readable until the link is complete.</li>
+  <li>Compaction later merges L0 files into L1, then L1 into L2.</li>
+</ol>
+<p>
+  Delete works the same way. It writes a tombstone pointer. The
+  tombstone hides older values during reads and compaction.
+</p>
+
+<div class="two">
+  <div class="pair good">
+    <span class="tag">Key write functions</span>
+    <ul class="plain" style="margin:0;padding-left:1.1rem">
+      <li><code>lsm.DB.Put</code> — public write entry.</li>
+      <li><code>lsm.DB.write</code> — WAL, memtable, value log.</li>
+      <li><code>lsm.DB.flushImm</code> — memtable to SSTable.</li>
+      <li><code>lsm.DB.compact</code>, <code>mergeFiles</code> — level merges.</li>
+    </ul>
+  </div>
+  <div class="pair good">
+    <span class="tag">Key read functions</span>
+    <ul class="plain" style="margin:0;padding-left:1.1rem">
+      <li><code>lsm.DB.Get</code> — public read entry.</li>
+      <li><code>lsm.DB.findFiles</code> — candidate SSTables.</li>
+      <li><code>lsm.DB.lookupFile</code> — one internal lookup.</li>
+      <li><code>sstable.Reader.Get</code> — baseline path.</li>
+      <li><code>sstable.Reader.GetWithModel</code> — model path.</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Read path — baseline</h3>
+<p>The baseline path does not use a model. It works like WiscKey.</p>
+<ol class="rules">
+  <li>The caller runs <code>db.Get(key)</code>.</li>
+  <li>The memtable checks the key. Hit means done.</li>
+  <li>The immutable memtable checks the key. Hit means done.</li>
+  <li><code>db.findFiles</code> collects candidate SSTables. Newest level first.</li>
+  <li>For each candidate, <code>db.lookupFile</code> runs an internal lookup.</li>
+  <li><code>Reader.Get</code> checks the bloom filter. A miss skips the file.</li>
+  <li><code>Reader.findBlock</code> binary-searches the index block.</li>
+  <li>The reader loads the data block.</li>
+  <li><code>searchInBlock</code> binary-searches inside the block.</li>
+  <li>A hit returns a value pointer. The reader fetches the value from
+      the value log.</li>
+</ol>
+
+<h3>Read path — model</h3>
+<p>
+  The model path replaces step 7 and step 8 with a learned prediction.
+  The paper calls this the Bourbon lookup.
+</p>
+<ol class="rules">
+  <li>Steps 1 to 6 are the same as the baseline path.</li>
+  <li><code>Reader.GetWithModel</code> runs when the file has a model.</li>
+  <li>The model predicts a position <code>p</code> and a window
+      <code>[p-δ, p+δ]</code>.</li>
+  <li><code>blockForPos</code> maps the position to a block index. A
+      prefix-sum binary search does this job.</li>
+  <li><code>LoadChunk</code> reads only the byte range for the window.
+      It does not load the whole block.</li>
+  <li><code>searchChunk</code> probes the middle of the chunk first.
+      Then it runs a binary search.</li>
+  <li>On a miss, the reader loads the full block. Then it checks the
+      adjacent blocks.</li>
+  <li>On a still-miss, the reader falls back to <code>Reader.Get</code>.
+      This keeps the result correct when model error exceeds δ.</li>
+</ol>
+
+<div class="two">
+  <div class="pair bad">
+    <span class="tag">Baseline cost</span>
+    <p>
+      Binary search on the index, then load a full data block, then
+      binary search inside the block. About 1355 ns per lookup on one
+      file of 200,000 keys.
+    </p>
+  </div>
+  <div class="pair good">
+    <span class="tag">Model path cost</span>
+    <p>
+      Predict a position, load a small chunk, probe and search. About
+      622 ns per lookup on the same file. Falls back to baseline when
+      the window misses.
+    </p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="model"><span class="num">11</span>The model and learning modes</h2>
+
+<h3>How the model trains</h3>
+<p>
+  <code>plr.Train(keys, delta)</code> builds a model from sorted keys.
+</p>
+<p>
+  The trainer keeps one open segment. Each new point must fit the
+  current line within δ. The trainer does not use a fixed line through
+  two endpoints. That method lets error drift. Instead, the trainer
+  keeps a feasible slope interval. Each point intersects the interval.
+  An empty interval closes the segment and starts a new one.
+</p>
+<p>The result: every training point has error at most δ (plus rounding).</p>
+
+<div class="two">
+  <div class="pair good">
+    <span class="tag">Key model functions</span>
+    <ul class="plain" style="margin:0;padding-left:1.1rem">
+      <li><code>plr.Train</code> — the training entry.</li>
+      <li><code>plr.Trainer.Add</code> — absorb or close.</li>
+      <li><code>plr.Trainer.slopeBounds</code> — feasible slope for one point.</li>
+      <li><code>plr.Model.Predict</code> — position and window.</li>
+      <li><code>plr.Model.SegmentIndex</code> — which segment covers a key.</li>
+    </ul>
+  </div>
+  <div class="pair good">
+    <span class="tag">Key learning functions</span>
+    <ul class="plain" style="margin:0;padding-left:1.1rem">
+      <li><code>learn.Manager.RegisterFile</code> — enroll a file.</li>
+      <li><code>learn.Manager.Start</code> / <code>Stop</code> — background loop.</li>
+      <li><code>learn.EstimateBenefit</code> — benefit estimate.</li>
+      <li><code>learn.Manager.TrainCost</code> — cost estimate.</li>
+      <li><code>lsm.DB.registerLearner</code> — wire file to manager.</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Learning modes</h3>
+<p>The <code>learn.Manager</code> decides when to train. Three modes exist.</p>
+<table>
+  <tr><th>Mode</th><th>Behavior</th></tr>
+  <tr><td><code>never</code></td>
+      <td>No training. All reads use the baseline path.</td></tr>
+  <tr><td><code>always</code></td>
+      <td>Train every registered file after <code>T_wait</code>.</td></tr>
+  <tr><td><code>cba</code></td>
+      <td>Train only when benefit exceeds cost.</td></tr>
+</table>
+<p>
+  The cost-benefit analyzer (CBA) estimates two numbers for each file.
+</p>
+<ul class="plain">
+  <li><strong>Cost:</strong> train time for that file. The manager
+      calibrates time per point.</li>
+  <li><strong>Benefit:</strong> how many baseline lookups a model would
+      skip or speed up.</li>
+</ul>
+<p>
+  If benefit is greater than cost, the manager trains. If not, it skips.
+  A bootstrap rule forces the first few files to train. This gives the
+  manager data to compare.
+</p>
+
+<h3>Paper guidelines mapped to code</h3>
+<table>
+  <tr><th>Paper idea</th><th>Where it lives</th></tr>
+  <tr><td>Greedy-PLR with δ = 8</td><td><code>plr.Train</code>, <code>plr.DefaultDelta</code></td></tr>
+  <tr><td>Model per file</td><td><code>learn.Manager</code>, <code>sstable.Reader.SetModel</code></td></tr>
+  <tr><td>Baseline lookup (WiscKey style)</td><td><code>sstable.Reader.Get</code></td></tr>
+  <tr><td>Model lookup (LoadChunk)</td><td><code>sstable.Reader.GetWithModel</code></td></tr>
+  <tr><td>Cost-benefit learning</td><td><code>learn.EstimateBenefit</code>, <code>learn.Manager</code></td></tr>
+  <tr><td>Three modes (never/always/CBA)</td><td><code>learn.Mode</code></td></tr>
+  <tr><td>Synthetic datasets</td><td><code>bench.Build</code>, <code>bench/dataset.go</code></td></tr>
+  <tr><td>T_wait before training</td><td><code>lsm.Options.TWait</code>, <code>learn.Options</code></td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="navigate"><span class="num">12</span>How to navigate the code</h2>
+
+<h3>First session (about 30 minutes)</h3>
+<ol class="rules">
+  <li>Open <code>plr/plr.go</code>. Read <code>Train</code>,
+      <code>Add</code>, <code>Predict</code>. Run
+      <code>go test ./plr/ -v</code>.</li>
+  <li>Open <code>bloom/bloom.go</code>. Read <code>New</code>,
+      <code>Add</code>, <code>MayContain</code>. Run
+      <code>go test ./bloom/ -v</code>.</li>
+  <li>Open <code>lsm/lsm.go</code>. Read <code>Options</code>,
+      <code>Open</code>, <code>Put</code>, <code>Get</code>. Do not read
+      compaction yet.</li>
+</ol>
+
+<h3>Second session (about 45 minutes)</h3>
+<ol class="rules">
+  <li>Open <code>memtable/memtable.go</code>. Read <code>Put</code>,
+      <code>Get</code>, <code>WAL.AppendPut</code>.</li>
+  <li>Open <code>vlog/vlog.go</code>. Read <code>Append</code>,
+      <code>Read</code>, <code>ValuePointer</code>.</li>
+  <li>Open <code>sstable/sstable.go</code>. Read
+      <code>Writer.Add</code>, <code>Writer.Finish</code>,
+      <code>Reader.Get</code>.</li>
+  <li>Trace one <code>Put</code> by hand. Write the call chain on paper.</li>
+</ol>
+
+<h3>Third session (about 60 minutes)</h3>
+<ol class="rules">
+  <li>Read <code>lsm.DB.flushImm</code>. Follow one flush from memtable
+      to file.</li>
+  <li>Read <code>lsm.DB.compact</code> and <code>mergeFiles</code>.
+      Follow one merge.</li>
+  <li>Read <code>sstable.Reader.GetWithModel</code> in full. Compare it
+      with <code>Reader.Get</code>.</li>
+  <li>Read <code>learn.Manager</code> loop. Connect training to
+      <code>SetModel</code>.</li>
+</ol>
+
+<h3>Grep recipes</h3>
+<table>
+  <tr><th>You want to find…</th><th>Run this</th></tr>
+  <tr><td>The public DB API</td>
+      <td><code>grep -n 'func (db \*DB)' lsm/lsm.go</code></td></tr>
+  <tr><td>Both read paths</td>
+      <td><code>grep -n 'func (r \*Reader) Get' sstable/sstable.go</code></td></tr>
+  <tr><td>Model attach point</td>
+      <td><code>grep -n 'SetModel' -r .</code></td></tr>
+  <tr><td>Learning modes</td>
+      <td><code>grep -n 'Mode' learn/learn.go</code></td></tr>
+  <tr><td>Test for a feature</td>
+      <td><code>grep -n 'func Test' lsm/lsm_test.go</code></td></tr>
+  <tr><td>Benchmark entry</td>
+      <td><code>grep -n 'func Benchmark\|func Compare' bench/</code></td></tr>
+</table>
+
+<h3>Run and measure</h3>
+<div class="prompt-box"><span class="c"># All tests</span>
+go test ./... -count=1
+
+<span class="c"># One package, verbose</span>
+go test ./lsm/ -v -count=1
+
+<span class="c"># Micro benchmarks</span>
+go test ./plr/ -bench=. -benchmem
+go test ./sstable/ -bench='BenchmarkGet' -benchtime=200000x
+
+<span class="c"># CLI comparison (baseline vs model)</span>
+go run ./cmd/bourbon -dataset linear -keys 200000 -ops 100000 -mode always
+go run ./cmd/bourbon -dataset normal -keys 200000 -ops 100000 -mode always
+go run ./cmd/bourbon -dataset seg10  -keys 200000 -ops 100000 -mode cba</div>
+<p>
+  Datasets for the CLI: <code>linear</code>, <code>seg1</code>,
+  <code>seg10</code>, <code>normal</code>, <code>random</code>.
+  Modes: <code>always</code>, <code>cba</code>, <code>never</code>.
+</p>
+
+<div class="callout">
+  <span class="label">Limits of this system</span>
+  <ul class="plain" style="margin:0">
+    <li>Single process. No network, no replication, no transactions.</li>
+    <li>Keys are <code>uint64</code>. Values are byte slices.</li>
+    <li>One writer at a time. Reads are safe during writes.</li>
+    <li>Compaction is simple. It merges whole levels. It has no size tiers.</li>
+    <li>The value log has no GC yet. Deleted values stay until compaction
+        drops them.</li>
+    <li>The CBA uses estimates. It does not profile real lookups.</li>
+    <li>The model is in memory. It does not persist across restarts.</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="results"><span class="num">13</span>Measured results</h2>
+
+<p>
+  Machine: Apple M1 Pro. Go 1.27.4. 200,000 keys. 100,000 lookups.
+  Mode: <code>always</code>. Values are 64 bytes.
+</p>
+
+<table>
+  <tr><th>Dataset</th><th>Baseline avg</th><th>Model avg</th><th>Speedup</th></tr>
+  <tr><td>linear</td><td>2.76 µs</td><td>1.97 µs</td><td><strong>1.40×</strong></td></tr>
+  <tr><td>normal</td><td>2.68 µs</td><td>2.09 µs</td><td><strong>1.28×</strong></td></tr>
+  <tr><td>seg10</td><td>2.80 µs</td><td>2.16 µs</td><td><strong>1.30×</strong></td></tr>
+  <tr><td>random</td><td>2.77 µs</td><td>2.03 µs</td><td><strong>1.36×</strong></td></tr>
+</table>
+
+<div class="callout ste">
+  <span class="label">Versus the paper</span>
+  <p style="margin:0">
+    The paper reports 1.23× to 1.78×. This implementation lands inside
+    that range on every dataset.
+  </p>
+</div>
+
+<p>Micro benchmark on one SSTable (200,000 keys):</p>
+<table>
+  <tr><th>Path</th><th>Time per lookup</th></tr>
+  <tr><td>Baseline <code>Get</code></td><td>~1355 ns</td></tr>
+  <tr><td>Model <code>GetWithModel</code></td><td>~622 ns</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="checklist"><span class="num">14</span>Change checklist</h2>
+
+<ol class="rules">
+  <li>State the change in one sentence.</li>
+  <li>Name the package you will edit.</li>
+  <li>Write or extend a test first.</li>
+  <li>Make the change. Keep sentences in comments short. Use active
+      voice.</li>
+  <li>Run <code>gofmt -w .</code> and <code>go vet ./...</code>.</li>
+  <li>Run <code>go test ./... -count=1</code>.</li>
+  <li>If the change touches lookups, run the CLI comparison.</li>
+  <li>Update <code>REPORT.md</code> and this page if the navigation
+      advice becomes wrong.</li>
+</ol>
+
+<footer>
+  <p>
+    Part one: study notes on ASD-STE100 Simplified Technical English
+    (Issue 9, January 2025). Unofficial aid. Not a substitute for the
+    official specification from ASD and the STEMG.
+    <br>
+    Part two: explanation of the Bourbon LSM Go codebase (arXiv:2005.14213),
+    written in STE style as a worked example. Companion file:
+    <code>REPORT.md</code>.
+    <br>
+    Sources: asd-ste100.org, asd-europe.org, public summaries of the 53
+    writing rules, and this repository.
+  </p>
+</footer>
+
+</div>
+</body>
+</html>
